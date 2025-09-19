@@ -1,0 +1,5 @@
+# add db 
+sample.db
+
+#add pycache file
+__pycache__/
