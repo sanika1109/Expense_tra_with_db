@@ -194,7 +194,7 @@ def get_expense_by_range(
      return JSONResponse(status_code=200,content={'messges':'Expense fetched successfully',
                                                   f'your total expense in {start_date} to {end_date} is':total_expense})
 
-@app.get('/get_expence_by_month')
+@app.get('/get_expense_by_month')
 def get_expense_by_month(
      month: str = Query(..., description="Enter the month in MM format"),
      year: str = Query(..., description="Enter the year in YYYY format"),
@@ -207,6 +207,46 @@ def get_expense_by_month(
      print('Total expense in this month:', total_expense)
      return JSONResponse(status_code=200, content={'messages':'Expense fetched successfully',
                                                    f'Your total expense in month {month} of year {year} is ':total_expense})
+@app.get('/get_expnese_by_category')
+def get_expense_by_category(
+     category:str=Query(...,description="Enter the valid category")
+):   
+     try:
+          conn=get_db_connection()
+          cursor=conn.cursor()
+          cursor.execute("SELECT category FROM expenses")
+          rows=cursor.fetchall()
+          conn.close
+          cat_list=[]
+          for row in rows:
+               cat_dict=dict(row)
+               cat_list.append(cat_dict)
+          # return f'{cat_list}'
+          
+     except:
+          HTTPException(status_code=500,detail="Unable to conntect the database")
+     
+    
+     final_cat_list=[item["category"] for item in cat_list]
+     display_cat_list=set(final_cat_list)
+     if category not in final_cat_list:
+          return JSONResponse(status_code=404,content={"messsges":"enter valid cat ","Please select category from this":f"{display_cat_list}"})
+
+     
+     cursor.execute("SELECT amount FROM expenses WHERE category=?",(category,))
+     amounts=cursor.fetchall()
+     # amount_list=[]
+     # for amount in amounts:
+     #      amount_dict=dict(amount)
+     #      amount_list.append(amount_dict)
+     total_amount=sum(amount['amount'] for amount in amounts)
+     return f'{total_amount}'
+
+     
+
+
+
+
 
 
 if __name__=='__main__':
