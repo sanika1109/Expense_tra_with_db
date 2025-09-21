@@ -42,6 +42,9 @@ app=FastAPI()
 #      print("Total Expense:", total)
 #      return total if total else 0.0 
 
+@app.get("/")
+def welcome_page():
+     return {'message':'WELCOME TO EXPENSE TRACKER'}
 
 @app.get("/get_expenses")
 def get_expenses(): 
