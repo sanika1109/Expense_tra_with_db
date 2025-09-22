@@ -205,6 +205,8 @@ def get_expense_by_month(
      rows=cursor.fetchall()
      total_expense=sum(row['amount'] for row in rows)
      print('Total expense in this month:', total_expense)
+     conn.commit()
+     conn.close()
      return JSONResponse(status_code=200, content={'messages':'Expense fetched successfully',
                                                    f'Your total expense in month {month} of year {year} is ':total_expense})
 @app.get('/get_expnese_by_category')
@@ -239,18 +241,31 @@ def get_expense_by_category(
      # for amount in amounts:
      #      amount_dict=dict(amount)
      #      amount_list.append(amount_dict)
+     conn.commit()
      total_amount=sum(amount['amount'] for amount in amounts)
+     conn.close()
      return f'{total_amount}'
 
+
      
-
-
+@app.get('/get_expense_by_date')
+def get_expense_by_date(
+     date:str=Query(...,description='Enter the date in form of YYYY-MM-DD')
+):
+     conn=get_db_connection()
+     cursor=conn.cursor()
+     cursor.execute('SELECT amount from expenses where date=?',(date,))
+     row=cursor.fetchall()
+     print(row)
+     conn.commit()
+     conn.close()
+     return JSONResponse(status_code=200,content={'messgae':f'your total expense of date is  {row}',})
 
 
 
 
 if __name__=='__main__':
-     uvicorn.run("sqlite_prac:app",host='127.0.0.1',port=8000,reload=True)
+     uvicorn.run("sqlite_prac:app",host='127.0.0.1',port=8000,reload=True) 
 
 
 
