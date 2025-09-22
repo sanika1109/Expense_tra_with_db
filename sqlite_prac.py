@@ -255,11 +255,12 @@ def get_expense_by_date(
      conn=get_db_connection()
      cursor=conn.cursor()
      cursor.execute('SELECT amount from expenses where date=?',(date,))
-     row=cursor.fetchall()
-     print(row)
+     rows=cursor.fetchall()
      conn.commit()
+   
+     total_expense=sum(row['amount'] for row in rows)
      conn.close()
-     return JSONResponse(status_code=200,content={'messgae':f'your total expense of date is  {row}',})
+     return JSONResponse(status_code=200,content={'messgae':f'your total expense of {date} is  {total_expense}',})
 
 
 

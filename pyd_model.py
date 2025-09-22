@@ -16,4 +16,4 @@ class UpdateExpense(BaseModel):
     amount:Annotated[Optional[float],Field(default=None,gt=0.0,strict=True,title="amount of expense",description="Enter the amount of expense greater than 0.0")]
     expense_description:Annotated[Optional[str],Field(default=None,max_length=100,title='description of expense',description="enter the description of expense less than 100 chars")]
     date:Annotated[Optional[date],Field(default=None,title="date of expense",description="Enter the date of expense in YYYY-MM-DD format")]
- 
+
