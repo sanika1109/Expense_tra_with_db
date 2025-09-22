@@ -264,6 +264,27 @@ def get_expense_by_date(
 
 
 
+def expense_by_date(date):
+     conn=get_db_connection()
+     cursor=conn.cursor()
+     cursor.execute('SELECT * FROM expenses WHERE date=?',(date,))
+     rows=cursor.fetchall()
+     # print(rows)
+     # print(type(rows))
+     # for row in rows:
+     #      print(row['id'])
+     #      print(row['amount'])
+     #      print(row['expense_description'])
+     #      print(row['category'])
+     #      print('*'*30)
+     data=[dict(row) for row in rows]
+     print(data)
+     json_data=json.dumps(data,indent=4)
+     print(json_data)
+     conn.commit()
+     conn.close()
+
+expense_by_date('2025-09-22')
 
 if __name__=='__main__':
      uvicorn.run("sqlite_prac:app",host='127.0.0.1',port=8000,reload=True) 
