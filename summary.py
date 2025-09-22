@@ -2,7 +2,18 @@
 from utils import *
 import json 
 from datetime import date
- 
+from langchain_core.prompts import PromptTemplate
+from langchain_groq import ChatGroq
+from langchain.schema.messages import SystemMessage, HumanMessage
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+groq_api_key = os.getenv("GROQ_API_KEY")
+
+
+
+  
 today_date = date.today().strftime("%Y-%m-%d")  # to get todays time
 def expense_by_date(date):
     conn = get_db_connection()
@@ -30,5 +41,22 @@ def expense_by_date(date):
 
 payload=expense_by_date(today_date)
 print(payload)
+
+
+
+llm = ChatGroq(
+    model="llama-3.1-8b-instant",
+    temperature=0.0,
+    max_retries=2,
+    # other params...
+)
+
+messages = [
+    ("system", "You are a helpful expense summarizer. plaese make a summary of my daily expense data"),
+    ("human", f"{payload}"),
+]
+
+result=llm.invoke(messages)
+print(result)
 
 

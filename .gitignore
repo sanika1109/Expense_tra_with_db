@@ -4,3 +4,8 @@ sample.db
 #add pycache file
 _pycache__/
 *.pyc
+
+# add .env file
+
+.env
+
