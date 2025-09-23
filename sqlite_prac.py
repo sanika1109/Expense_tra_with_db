@@ -254,6 +254,8 @@ def get_expense_by_date(
 ):
      conn=get_db_connection()
      cursor=conn.cursor()
+     print(date)
+     print(type(date))
      cursor.execute('SELECT amount from expenses where date=?',(date,))
      rows=cursor.fetchall()
      conn.commit()
@@ -290,6 +292,7 @@ def get_expense_by_date(
 
 if __name__=='__main__':
      uvicorn.run("sqlite_prac:app",host='127.0.0.1',port=8000,reload=True) 
+     
 
 
 
