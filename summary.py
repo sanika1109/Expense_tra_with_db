@@ -114,6 +114,33 @@ def summarize_expenses(state:ExpenseState):
     return {'summary':result.content}
 
 
+# def log_to_news_google_sheet(state:ExpenseState):
+#     """Log message to Google Sheet"""
+#     # Google Sheets setup
+#     SCOPE = ["https://www.googleapis.com/auth/spreadsheets"]
+#     creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPE)
+#     client = gspread.authorize(creds)
+#     sheet_id = os.getenv("SHEET_ID") # os.getenv("SHEET_NAME")
+#     workbook = client.open_by_key(sheet_id)  # First sheet
+#     users_sheet = workbook.worksheet("sept_sheet")
+
+#       # ✅ Ensure headers exist
+#     headers = users_sheet.row_values(1)  # first row
+#     if headers != ["Date", "Expense_summary"]:
+#         users_sheet.update("A1:B1", [["Date", "Expense_summary"]])
+    
+#     users_sheet.append_row([state['date'],state['summary']])
+
+#     return {}
+
+#     # Current date
+#     # date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+#     # Each row will be: [Date, Message]
+#     # for msg in messages:
+#     #     users_sheet.append_row([date_str, msg])
+
+
 def log_to_news_google_sheet(state:ExpenseState):
     """Log message to Google Sheet"""
     # Google Sheets setup
@@ -122,23 +149,30 @@ def log_to_news_google_sheet(state:ExpenseState):
     client = gspread.authorize(creds)
     sheet_id = os.getenv("SHEET_ID") # os.getenv("SHEET_NAME")
     workbook = client.open_by_key(sheet_id)  # First sheet
-    users_sheet = workbook.worksheet("sept_sheet")
 
-      # ✅ Ensure headers exist
-    headers = users_sheet.row_values(1)  # first row
-    if headers != ["Date", "Expense_summary"]:
-        users_sheet.update("A1:B1", [["Date", "Expense_summary"]])
-    
-    users_sheet.append_row([state['date'],state['summary']])
 
+    sheet_name=state["date"].split('-')[1]+"_sheet"
+    print('######'*30)
+    print(sheet_name)
+    try:
+        users_sheet = workbook.worksheet(sheet_name)
+    except gspread.exceptions.WorksheetNotFound:
+        users_sheet = workbook.add_worksheet(title=sheet_name, rows=100, cols=2)
+        # users_sheet.update("A1:B1", [["Date", "Expense_summary"]])  # add headers
+        headers = users_sheet.row_values(1)  # first row
+        if headers != ["Date", "Expense_summary"]:
+            users_sheet.update("A1:B1", [["Date", "Expense_summary"]])
+
+    #Check if date already exists in first column
+    existing_dates = users_sheet.col_values(1)  # all values in column A
+    if state['date'] not in existing_dates:
+        users_sheet.append_row([state['date'],state["summary"]])
+        print(f"Added new entry for {state['date']}")
+    else:
+        print(f"{state['date']} Already exists,skipping entry...")
+        
+        
     return {}
-
-    # Current date
-    # date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    # Each row will be: [Date, Message]
-    # for msg in messages:
-    #     users_sheet.append_row([date_str, msg])
 
 
 
