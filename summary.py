@@ -31,12 +31,6 @@ llm = ChatGroq(
     # other params...
 )
 
-  
-# today_date = date.today().strftime("%Y-%m-%d").date  # to get todays time
-# today_date = date.today()  
-# print(type(today_date))
-# print(today_date)
-
 
 
 def expense_by_date(state:ExpenseState):
@@ -44,13 +38,7 @@ def expense_by_date(state:ExpenseState):
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row  # important: rows as dict-like
     cursor = conn.cursor()
-    # today_date = date.today().strftime("%Y-%m-%d")
-    # print(today_date)
-    # print('#'*20)
-    # print(type(today_date))
-    print("$#######"*30)
-    print(state["date"])
-    cursor.execute('SELECT * FROM expenses WHERE date=?', (today_date,))
+    cursor.execute('SELECT * FROM expenses WHERE date=?', (state["date"],))
     rows = cursor.fetchall()
 
      # for row in rows:
@@ -71,8 +59,6 @@ def expense_by_date(state:ExpenseState):
 
 
 
-    
-
 ##### Twilio setup for sending summary to whatsapp
 _account_sid=os.getenv("TWILIO_ACCOUNT_SID")
 _auth_token=os.getenv("TWILIO_AUTH_TOKEN")
@@ -84,28 +70,20 @@ _twilio=Client(_account_sid,_auth_token)
 
 def send_whatsapp_text(body:str,to:str=None):
     "send the Whatsapp message via Twilio"
-    # to=to or _to_wa
     msg=_twilio.messages.create(from_=_from_wa,to=_to_wa,body=body)
     print("Twilio SID:",msg.sid)
 
 def send_to_whatsapp_node(state:ExpenseState):
     "LangGraph node:to send whatsapp messages"
-    print("###"*12)
-    print(state["summary"])
-    # print(type(state["summary"]content))
-    print(state["summary"].content)
-    send_whatsapp_text(state["summary"].content)
+    # print("###"*12)
+    # print(state["summary"])
+    send_whatsapp_text(state["summary"])
     return {}
 
 def summarize_expenses(state:ExpenseState):
     "lanngraph node to summarize_expenses"
-    # today_date = date.today().strftime("%Y-%m-%d")
-    # print(today_date)
-    # print(type(today_date))
-    #print(state['date'])
-    print('###'*24)
     payload=state["data_json"]
-    print(payload)
+    # print(payload)
     messages = [
     (
         "system",
@@ -120,9 +98,9 @@ def summarize_expenses(state:ExpenseState):
     ),
 ]
     result=llm.invoke(messages)
-    print(result)
+    # print(result)
 
-    return {'summary':result}
+    return {'summary':result.content}
 
 
 
@@ -138,20 +116,14 @@ graph.add_edge(START,"expense_by_date")
 graph.add_edge('expense_by_date','summarize_expenses')
 graph.add_edge('summarize_expenses','send_to_whatsapp_node')
 graph.add_edge('send_to_whatsapp_node',END)
-##graph.add_edge(START,"summarize_expenses")
-##graph.add_edge('summarize_expenses',END)
-# graph.add_edge("send_to_whatsapp_node",END)
 
 # compile
 workflow=graph.compile()
 
 # execute
 if __name__=="__main__":
-     # Run the LangGraph workflow
-    # today_date = date.today().strftime("%Y-%m-%d").date()
-    # print(type(today_date))
     today_date = date.today().strftime("%Y-%m-%d")
-    print(type(today_date))
+    # print(type(today_date))
     final_state = workflow.invoke({
     'date':today_date
     })
