@@ -28,3 +28,4 @@ print("⏳ Scheduler started... Waiting for 11:00 PM every day.")
 while True:  #it's like staying awake to check the clock.
     schedule.run_pending()   
     time.sleep(60)
+

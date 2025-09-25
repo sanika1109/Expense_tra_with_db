@@ -8,9 +8,12 @@ import json, requests, time
 import sqlite3  # import sqlite3 module to interact with SQLite database
 from pyd_model import *
 from utils import *
+import uuid
 
 app=FastAPI()
 
+
+session={}
 # DB_NAME = "sample.db"
 
 
@@ -46,6 +49,44 @@ app=FastAPI()
 def welcome_page():
      return {'message':'WELCOME TO EXPENSE TRACKER'}
 
+@app.post('/register')
+def register_user(users:Users):
+     conn=get_db_connection()
+     cursor=conn.cursor()
+     try:
+          cursor.execute("INSERT INTO users(user_name,user_pass) VALUES(?,?)",(users.user_name,users.user_pass))
+          conn.commit()
+          return {"messages":f"user {users.user_name} created successfully...."}
+     except sqlite3.IntegrityError:
+        raise HTTPException(status_code=400, detail="Username already exists")
+     finally:
+        conn.close()
+
+@app.post('/login')
+def user_login(users:Users):
+     conn=get_db_connection()
+     cursor=conn.cursor()
+     
+     cursor.execute("SELECT * FROM users WHERE user_name=? AND user_pass=?",(users.user_name,users.user_pass))
+     db_user=cursor.fetchone()
+     #session['user_id']=db_user["u_id"]
+     # session['user_id']=dict(db_user)['u_id']
+     if not db_user:
+          raise HTTPException(status_code=400,detail="Invalid username or password")
+     
+     # Generate a random session_id
+     session_id = str(uuid.uuid4())
+     print(session_id)
+     print("######"*20)
+     # save session to database 
+     cursor.execute("INSERT INTO sessions (session_id,user_id) VALUES(?,?)",(session_id,db_user["u_id"]))
+     conn.commit()
+     conn.close()
+     return {'messgae':f"Welcome {users.user_name}! ,'session_id' {session_id}"}
+
+
+
+
 @app.get("/get_expenses")
 def get_expenses(): 
     conn = get_db_connection()
@@ -53,26 +94,63 @@ def get_expenses():
     cursor.execute("SELECT * FROM expenses")
     rows = cursor.fetchall()
     conn.close()
-    return [dict(row) for row in rows] # return list of dicts
+    if rows !=[]:
+          return [dict(row) for row in rows] # return list of dicts
+    else:
+         raise HTTPException(status_code=404,detail="No Expense Inserted")
+
+@app.get("/get_session")
+def get_session(): 
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM sessions")
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+@app.get("/get_users")
+def get_users(): 
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users")
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
 
 
-@app.post('/add_expense')
-def add_expense(expense:Expense): # expense is an instance of Expense model
+
+
+@app.post('/add_expense/')
+def add_expense(expense:Expense,session_id:str=Query(...)): # expense is an instance of Expense model
+
+     user_id=get_user_from_session(session_id)
+     print(user_id)
+     print(session_id)
+     print("######"*20)
+     #return {"message":f"{user_id} {session_id}"}  #"message": "2 68b4b99c-2ece-4fca-93fb-f907f3146ffc"
+   
      conn = get_db_connection()
      cursor = conn.cursor()
-     cursor.execute("SELECT * FROM expenses")
-     rows = cursor.fetchall()
-     print(rows)
-     for row in rows:
-          if expense.id == row['id']:
-               raise HTTPException(status_code=400, detail="Expense with this id already exists")
-     cursor.execute("INSERT INTO expenses(id,category,amount,expense_description,date) VALUES(?,?,?,?,?)"
-                    ,(expense.id, expense.category, expense.amount, expense.expense_description, expense.date))
-     
-     total_expense=calculate_total_expense()
+     # cursor.execute("SELECT * FROM expenses")
+     # rows = cursor.fetchall()
+     # print(rows)
+     # for row in rows:
+     #      if expense.id == row['id']:
+     #           raise HTTPException(status_code=400, detail="Expense with this id already exists")
+     # cursor.execute("INSERT INTO expenses(category,amount,expense_description,date,user_id) VALUES(?,?,?,?,?,?)"
+     #                ,(expense.category, expense.amount, expense.expense_description, expense.date,user_id))
+     cursor.execute("INSERT INTO expenses(category,amount,expense_description,date,user_id) VALUES(?,?,?,?,?)"
+                    ,(expense.category, expense.amount,'expense_description',"date",user_id))
+     total_expense=calculate_total_expense(user_id)
+     print(total_expense)
      conn.commit()
      conn.close()
-     return JSONResponse(status_code=202,content={"message":"Expense added successfully","Your Total Expense ":total_expense})
+
+     return {"message":f"{user_id}  {total_expense}"}
+     # return JSONResponse(status_code=202,content={"message":"Expense added successfully","Your Total Expense ":total_expense})
+
+
+
      # return JSONResponse(status_code=202,content={"message":"Expense added successfully","Your Total Expense ":total_expense})
 
      #    data=load_data()
