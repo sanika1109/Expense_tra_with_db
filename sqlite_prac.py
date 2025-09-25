@@ -62,6 +62,15 @@ def register_user(users:Users):
      finally:
         conn.close()
 
+@app.get("/get_users")
+def get_users(): 
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users")
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
 @app.post('/login')
 def user_login(users:Users):
      conn=get_db_connection()
@@ -85,6 +94,14 @@ def user_login(users:Users):
      return {'messgae':f"Welcome {users.user_name}! ,'session_id' {session_id}"}
 
 
+@app.get("/get_session")
+def get_session(): 
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM sessions")
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
 
 
 @app.get("/get_expenses")
@@ -99,25 +116,6 @@ def get_expenses():
     else:
          raise HTTPException(status_code=404,detail="No Expense Inserted")
 
-@app.get("/get_session")
-def get_session(): 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM sessions")
-    rows = cursor.fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
-
-@app.get("/get_users")
-def get_users(): 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users")
-    rows = cursor.fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
-
-
 
 
 @app.post('/add_expense/')
@@ -131,40 +129,14 @@ def add_expense(expense:Expense,session_id:str=Query(...)): # expense is an inst
    
      conn = get_db_connection()
      cursor = conn.cursor()
-     # cursor.execute("SELECT * FROM expenses")
-     # rows = cursor.fetchall()
-     # print(rows)
-     # for row in rows:
-     #      if expense.id == row['id']:
-     #           raise HTTPException(status_code=400, detail="Expense with this id already exists")
-     # cursor.execute("INSERT INTO expenses(category,amount,expense_description,date,user_id) VALUES(?,?,?,?,?,?)"
-     #                ,(expense.category, expense.amount, expense.expense_description, expense.date,user_id))
      cursor.execute("INSERT INTO expenses(category,amount,expense_description,date,user_id) VALUES(?,?,?,?,?)"
                     ,(expense.category, expense.amount,'expense_description',"date",user_id))
-     total_expense=calculate_total_expense(user_id)
-     print(total_expense)
      conn.commit()
      conn.close()
-
+     total_expense=calculate_total_expense(user_id)
+     print(total_expense)
      return {"message":f"{user_id}  {total_expense}"}
-     # return JSONResponse(status_code=202,content={"message":"Expense added successfully","Your Total Expense ":total_expense})
 
-
-
-     # return JSONResponse(status_code=202,content={"message":"Expense added successfully","Your Total Expense ":total_expense})
-
-     #    data=load_data()
-     #    print(data)
-     #    if expense.id in data:
-     #         raise HTTPException(status_code=400,detail="expense with this id already exists")
-        
-     #    data[expense.id]=expense.model_dump(exclude=['id']) #exclude id field from model_dump
-     #    print('****'*15)
-     #    print(data)
-     #    save_to_json(data)
-     #    total_expense=calculate_total_expenses(data)
-     #    return {"message":"Expense added successfully","Your Total Expense ":total_expense}
-     #    # return JSONResponse(status_code=202,content={"message":"Expense added successfully"})
     
 @app.put('/update_expense/{expense_id}')
 def update_expense(expense_id:str,expense_update:UpdateExpense):
